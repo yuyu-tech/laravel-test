@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Foundation\Bus\DispatchesJobs;
-use Illuminate\Foundation\Validation\ValidatesRequests;
-use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class EventsController extends BaseController
 {
@@ -102,7 +103,7 @@ class EventsController extends BaseController
 
     public function getEventsWithWorkshops() {
         $query = Event::with('workshops');
-        return $query->get()->toArray();
+        return $query->get();
     }
 
 
@@ -180,6 +181,9 @@ class EventsController extends BaseController
      */
 
     public function getFutureEventsWithWorkshops() {
-        throw new \Exception('implement in coding task 2');
+        $query = Event::with('workshops')->whereDoesntHave('workshops', function (Builder $query) {
+            $query->where('start', '<', now());
+        });
+        return $query->get();
     }
 }
