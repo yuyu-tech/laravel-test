@@ -4,6 +4,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MenuItem;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Routing\Controller as BaseController;
 
 class MenuController extends BaseController
@@ -93,6 +94,32 @@ class MenuController extends BaseController
      */
 
     public function getMenuItems() {
-        throw new \Exception('implement in coding task 3');
+        $menuItems = MenuItem::get();
+        return $this->buildTree($menuItems, 'parent_id', 'id');
+    }
+
+    /**
+     * This function builds a nested menu from a flat array.
+     */
+    function buildTree(Collection | array $elements, string $parentAttributeName, string $keyAttributeName, $parentId = null, $isGrouped = false)
+    {
+        gettype($elements) === 'array' ? $elements = collect($elements) : null;
+
+        !$isGrouped ? $elements = $elements->groupBy($parentAttributeName) : null;
+
+        $branch = $parentId ? $elements->get($parentId) : $elements->first();
+
+        /**
+         * Get children of parents elements.
+         */
+        $branch->each(function ($item, $key) use ($elements, $parentAttributeName, $keyAttributeName, $parentId) {
+            if ($elements->has($item->{$keyAttributeName})) {
+                $item->children = $this->buildTree($elements, $parentAttributeName, $keyAttributeName, $item->{$keyAttributeName}, true);
+            } else {
+                $item->children = [];
+            }
+        });
+
+        return $branch;
     }
 }
